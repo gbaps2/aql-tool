@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>GB/T 2828.1 抽样工具 - 三缺陷等级 (AQL 0.65/1.5/4.0)</title>
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="抽检工具">
+    <meta name="theme-color" content="#1f5e7e">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+        body {
+            background: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: #1e466e;
+            margin: 0 0 0.25rem 0;
+            border-left: 5px solid #2c7da0;
+            padding-left: 18px;
+        }
+        .sub {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+            padding-left: 23px;
+            opacity: 0.8;
+        }
+        .card-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-top: 10px;
+        }
+        .card {
+            flex: 1;
+            min-width: 380px;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+            overflow: hidden;
+            border: 1px solid #e2edf2;
+        }
+        .card-header {
+            background: #1f5e7e;
+            color: white;
+            padding: 18px 24px;
+            font-weight: 600;
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+        }
+        .card-header.inner {
+            background: #2c6e4f;
+        }
+        .card-body {
+            padding: 24px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            color: #1f3b4c;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 16px;
+            background: #fff;
+            transition: 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
+        }
+        .row-2 {
+            display: flex;
+            gap: 12px;
+        }
+        .row-2 > div {
+            flex: 1;
+        }
+        .result-area {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 18px;
+            margin-top: 20px;
+            border: 1px solid #e2edf2;
+        }
+        .defect-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .defect-table th, .defect-table td {
+            text-align: left;
+            padding: 10px 6px;
+            border-bottom: 1px solid #dce5ef;
+        }
+        .defect-table th {
+            background-color: #eef2fa;
+            font-weight: 700;
+            color: #1e466e;
+        }
+        .defect-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .badge-a { background: #fde6d2; color: #b45f1b; }
+        .badge-b { background: #ffe0e0; color: #bc4e2c; }
+        .badge-c { background: #e0f0e8; color: #1e6f5c; }
+        .big-number {
+            font-weight: 800;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+        .note {
+            font-size: 0.75rem;
+            color: #5b6e8c;
+            margin-top: 16px;
+            border-top: 1px solid #e2edf2;
+            padding-top: 12px;
+        }
+        .btn-calc {
+            background: #2c7da0;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-calc:hover {
+            background: #1e5a78;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.75rem;
+            color: #5b6e8c;
+        }
+        @media (max-width: 850px) {
+            .card { min-width: 100%; }
+        }
+        hr {
+            margin: 16px 0;
+        }
+        .info-text {
+            background: #eef2ff;
+            padding: 8px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            margin-bottom: 16px;
+        }
+        /* 突出显示关键数值 */
+        .key-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0f5b8c;
+            line-height: 1.2;
+            margin-right: 8px;
+            display: inline-block;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2edf2;
+        }
+        .result-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .weak-text {
+            font-size: 0.7rem;
+            color: #7f8c8d;
+            margin-left: 6px;
+        }
+        .result-value {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📦 GB/T 2828.1 抽样计算器</h1>
+    <div class="sub">正常检验一次抽样方案 | 三缺陷等级固定 AQL：A类=0.65 / B类=1.5 / C类=4.0</div>
+
+    <div class="card-grid">
+        <!-- 外包材模块 (一般检验水平 I) -->
+        <div class="card">
+            <div class="card-header">📦 外包材 · 一般检验水平 I</div>
+            <div class="card-body">
+                <div class="input-group">
+                    <label>📊 到货数量 (个/件)</label>
+                    <input type="number" id="outerQty" value="5000" step="1" min="1" placeholder="例如: 5000">
+                </div>
+                <div class="row-2">
+                    <div class="input-group">
+                        <label>📦 每箱数量 (个/箱)</label>
+                        <input type="number" id="outerPerBox" value="200" step="1" min="1" placeholder="每箱装多少个">
+                    </div>
+                    <div class="input-group">
+                        <label>📌 托盘数量 (板)</label>
+                        <input type="number" id="outerPallets" value="5" step="1" min="1" placeholder="几托盘">
+                    </div>
+                </div>
+                <button class="btn-calc" id="calcOuterBtn">🔍 计算抽样方案 & 抽箱规则</button>
+                <div id="outerResult" class="result-area">
+                    <div class="info-text">✔️ 以下为三类缺陷对应的抽样判定标准（样本量及Ac/Re）</div>
+                    <table class="defect-table" id="outerDefectTable">
+                        <thead>
+                            <tr><th>缺陷类别</th><th>AQL (%)</th><th>样本量 (n)</th><th>接收数 (Ac)</th><th>拒收数 (Re)</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><span class="defect-badge badge-a">A类</span></td><td>0.65</td><td id="outerNA">—</td><td id="outerAcA">—</td><td id="outerReA">—</td></tr>
+                            <tr><td><span class="defect-badge badge-b">B类</span></td><td>1.5</td><td id="outerNB">—</td><td id="outerAcB">—</td><td id="outerReB">—</td></tr>
+                            <tr><td><span class="defect-badge badge-c">C类</span></td><td>4.0</td><td id="outerNC">—</td><td id="outerAcC">—</td><td id="outerReC">—</td></tr>
+                        </tbody>
+                    </table>
+                    <!-- 突出显示抽箱相关数值 -->
+                    <div class="result-item" style="margin-top: 16px;">
+                        <span class="result-label">📦 总箱数</span>
+                        <span class="result-value" id="outerTotalBoxDisplay">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">🔍 应抽总箱数</span>
+                        <span class="result-value" id="outerBoxSampleDisplay">—</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">📌 每托盘建议抽箱数</span>
+                        <span class="result-value" id="outerPerPalletDisplay">—</span>
+                    </div>
+                    <div class="note">✅ 抽箱规则：总箱数 = 向上取整(到货数量/每箱数)，抽箱总数 = round(√总箱数) + 1 (四舍五入取整后再加1，且不超过总箱数)。实际抽样时请从各托盘随机抽取对应箱数，并从箱中随机抽取足量样品。三类缺陷共用同一组样品，分别统计不合格品数，各自对照Ac/Re判定。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 内包材模块 (特殊检验水平 S-3) -->
+        <div class="card">
+            <div class="card-header inner">🧴 内包材 · 特殊检验水平 S-3</div>
+            <div class="card-body">
+                <div class="input-group">
+                    <label>📊 到货数量 (个/件)</label>
+                    <input type="number" id="innerQty" value="10000" step="1" min="1" placeholder="例如: 10000">
+                </div>
+                <div class="input-group">
+                    <label>🏷️ 规格型号 (备注)</label>
+                    <input type="text" id="innerSpec" placeholder="可选, 如PET瓶/泵头">
+                </div>
+                <button class="btn-calc" id="calcInnerBtn">🔬 计算抽样方案 (S-3)</button>
+                <div id="innerResult" class="result-area">
+                    <div class="info-text">✔️ 特殊检验水平 S-3 · 三类缺陷固定AQL</div>
+                    <table class="defect-table" id="innerDefectTable">
+                        <thead><tr><th>缺陷类别</th><th>AQL (%)</th><th>样本量 (n)</th><th>接收数 (Ac)</th><th>拒收数 (Re)</th></tr></thead>
+                        <tbody>
+                            <tr><td><span class="defect-badge badge-a">A类</span></td><td>0.65</td><td id="innerNA">—</td><td id="innerAcA">—</td><td id="innerReA">—</td></tr>
+                            <tr><td><span class="defect-badge badge-b">B类</span></td><td>1.5</td><td id="innerNB">—</td><td id="innerAcB">—</td><td id="innerReB">—</td></tr>
+                            <tr><td><span class="defect-badge badge-c">C类</span></td><td>4.0</td><td id="innerNC">—</td><td id="innerAcC">—</td><td id="innerReC">—</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="note">✔️ 特殊检验水平 S-3 适用于破坏性检测或高成本检验，样本量极小。本工具基于GB/T 2828.1 正常检验一次抽样主表，内置箭头跟随规则。三类缺陷分别按各自AQL查表得出独立判定标准。</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        ⚙️ 依据 GB/T 2828.1-2012 正常检验一次抽样方案 · 内置完整字码表及Ac/Re（含箭头向下检索）<br>
+        外包材: 一般检验水平Ⅰ | 内包材: 特殊检验水平 S-3 | 缺陷等级：A类 AQL=0.65 / B类 1.5 / C类 4.0<br>
+        抽箱规则：应抽总箱数 = round(√总箱数) + 1 (四舍五入取整)
+    </div>
+</div>
+
+<script>
+    // ---------- 样本量字码映射 ----------
+    const lotRanges = [
+        { min: 2, max: 8 }, { min: 9, max: 15 }, { min: 16, max: 25 }, { min: 26, max: 50 },
+        { min: 51, max: 90 }, { min: 91, max: 150 }, { min: 151, max: 280 }, { min: 281, max: 500 },
+        { min: 501, max: 1200 }, { min: 1201, max: 3200 }, { min: 3201, max: 10000 },
+        { min: 10001, max: 35000 }, { min: 35001, max: 150000 }, { min: 150001, max: 500000 },
+        { min: 500001, max: 9999999 }
+    ];
+    const codeMapIL1 = ['A','A','B','C','C','D','E','F','G','H','J','K','L','M','N'];
+    const codeMapS3   = ['A','A','A','A','B','B','C','C','C','D','D','E','E','F','F'];
+
+    function getCodeFromQty(qty, levelType) {
+        if (qty < 2) qty = 2;
+        for (let i = 0; i < lotRanges.length; i++) {
+            const range = lotRanges[i];
+            if (qty >= range.min && qty <= range.max) {
+                if (levelType === 'IL1') return codeMapIL1[i];
+                if (levelType === 'S3') return codeMapS3[i];
+            }
+        }
+        return 'N';
+    }
+
+    // ---------- 正常检验一次抽样主表 + 箭头跟随 ----------
+    const codeOrder = ['A','B','C','D','E','F','G','H','J','K','L','M','N','P','Q'];
+    const sampleSizeMap = {
+        'A':2, 'B':3, 'C':5, 'D':8, 'E':13, 'F':20, 'G':32, 'H':50, 'J':80, 'K':125, 'L':200, 'M':315, 'N':500, 'P':800, 'Q':1250
+    };
+    const acReData = {
+        'A': { '0.15':{Ac:0,Re:1}, '0.25':{Ac:0,Re:1}, '0.4':{Ac:0,Re:1}, '0.65':{Ac:0,Re:1}, '1.0':{Ac:0,Re:1}, '1.5':{Ac:0,Re:1}, '2.5':{Ac:0,Re:1}, '4.0':{Ac:0,Re:1}, '6.5':{Ac:0,Re:1} },
+        'B': { '0.65':{Ac:0,Re:1}, '1.0':{Ac:0,Re:1}, '1.5':{Ac:0,Re:1}, '2.5':{Ac:0,Re:1}, '4.0':{Ac:0,Re:1}, '6.5':{Ac:0,Re:1} },
+        'C': { '1.5':{Ac:0,Re:1}, '2.5':{Ac:0,Re:1}, '4.0':{Ac:0,Re:1}, '6.5':{Ac:0,Re:1}, '10':{Ac:0,Re:1} },
+        'D': { '2.5':{Ac:0,Re:1}, '4.0':{Ac:0,Re:1}, '6.5':{Ac:0,Re:1}, '10':{Ac:0,Re:1} },
+        'E': { '4.0':{Ac:0,Re:1}, '6.5':{Ac:0,Re:1}, '10':{Ac:1,Re:2} },
+        'F': { '6.5':{Ac:0,Re:1}, '10':{Ac:1,Re:2}, '15':{Ac:2,Re:3} },
+        'G': { '2.5':{Ac:1,Re:2}, '4.0':{Ac:2,Re:3}, '6.5':{Ac:3,Re:4}, '10':{Ac:5,Re:6}, '15':{Ac:7,Re:8} },
+        'H': { '1.0':{Ac:1,Re:2}, '1.5':{Ac:2,Re:3}, '2.5':{Ac:3,Re:4}, '4.0':{Ac:5,Re:6}, '6.5':{Ac:7,Re:8}, '10':{Ac:10,Re:11} },
+        'J': { '0.65':{Ac:1,Re:2}, '1.0':{Ac:2,Re:3}, '1.5':{Ac:3,Re:4}, '2.5':{Ac:5,Re:6}, '4.0':{Ac:7,Re:8}, '6.5':{Ac:10,Re:11}, '10':{Ac:14,Re:15} },
+        'K': { '0.4':{Ac:1,Re:2}, '0.65':{Ac:2,Re:3}, '1.0':{Ac:3,Re:4}, '1.5':{Ac:5,Re:6}, '2.5':{Ac:7,Re:8}, '4.0':{Ac:10,Re:11}, '6.5':{Ac:14,Re:15} },
+        'L': { '0.25':{Ac:1,Re:2}, '0.4':{Ac:2,Re:3}, '0.65':{Ac:3,Re:4}, '1.0':{Ac:5,Re:6}, '1.5':{Ac:7,Re:8}, '2.5':{Ac:10,Re:11}, '4.0':{Ac:14,Re:15} },
+        'M': { '0.15':{Ac:1,Re:2}, '0.25':{Ac:2,Re:3}, '0.4':{Ac:3,Re:4}, '0.65':{Ac:5,Re:6}, '1.0':{Ac:7,Re:8}, '1.5':{Ac:10,Re:11}, '2.5':{Ac:14,Re:15}, '4.0':{Ac:21,Re:22} },
+        'N': { '0.10':{Ac:1,Re:2}, '0.15':{Ac:2,Re:3}, '0.25':{Ac:3,Re:4}, '0.4':{Ac:5,Re:6}, '0.65':{Ac:7,Re:8}, '1.0':{Ac:10,Re:11}, '1.5':{Ac:14,Re:15}, '2.5':{Ac:21,Re:22} },
+        'P': { '0.065':{Ac:1,Re:2}, '0.1':{Ac:2,Re:3}, '0.15':{Ac:3,Re:4}, '0.25':{Ac:5,Re:6}, '0.4':{Ac:7,Re:8}, '0.65':{Ac:10,Re:11}, '1.0':{Ac:14,Re:15} },
+        'Q': { '0.04':{Ac:1,Re:2}, '0.065':{Ac:2,Re:3}, '0.1':{Ac:3,Re:4}, '0.15':{Ac:5,Re:6}, '0.25':{Ac:7,Re:8}, '0.4':{Ac:10,Re:11}, '0.65':{Ac:14,Re:15} }
+    };
+
+    function getSamplingPlan(letterCode, aqlPercent) {
+        let targetAql = aqlPercent;
+        let aqlKey = targetAql.toString();
+        let idx = codeOrder.indexOf(letterCode);
+        if (idx === -1) idx = 0;
+        for (let i = idx; i < codeOrder.length; i++) {
+            const curCode = codeOrder[i];
+            const map = acReData[curCode];
+            if (map) {
+                if (map[aqlKey] !== undefined) {
+                    return { n: sampleSizeMap[curCode], Ac: map[aqlKey].Ac, Re: map[aqlKey].Re, usedCode: curCode };
+                }
+                for (let k in map) {
+                    if (Math.abs(parseFloat(k) - targetAql) < 0.001) {
+                        return { n: sampleSizeMap[curCode], Ac: map[k].Ac, Re: map[k].Re, usedCode: curCode };
+                    }
+                }
+            }
+        }
+        return { n: 1250, Ac: 21, Re: 22, usedCode: 'Q' };
+    }
+
+    function getThreePlans(qty, levelType) {
+        const code = getCodeFromQty(qty, levelType);
+        const planA = getSamplingPlan(code, 0.65);
+        const planB = getSamplingPlan(code, 1.5);
+        const planC = getSamplingPlan(code, 4.0);
+        return { planA, planB, planC, baseCode: code };
+    }
+
+    // ---------- 外包材计算 (突出显示关键数值) ----------
+    function calcOuter() {
+        let qty = parseFloat(document.getElementById('outerQty').value);
+        let perBox = parseFloat(document.getElementById('outerPerBox').value);
+        let pallets = parseFloat(document.getElementById('outerPallets').value);
+        if (isNaN(qty) || qty <= 0) { alert('请输入正确的到货数量'); return; }
+        if (isNaN(perBox) || perBox <= 0) { alert('请输入每箱数量'); return; }
+        if (isNaN(pallets) || pallets <= 0) { alert('请输入托盘数量'); return; }
+
+        let totalBoxes = Math.ceil(qty / perBox);
+        let sqrtVal = Math.sqrt(totalBoxes);
+        let roundedSqrt = Math.round(sqrtVal);
+        let sampleBoxes = roundedSqrt + 1;
+        if (sampleBoxes > totalBoxes) sampleBoxes = totalBoxes;
+
+        // 生成每托盘建议文字
+        let perPalletMain = "";
+        let perPalletWeak = "";
+        if (sampleBoxes >= pallets) {
+            let each = Math.floor(sampleBoxes / pallets);
+            let remainder = sampleBoxes % pallets;
+            perPalletMain = `${each} ~ ${each+1}箱`;
+            perPalletWeak = `(平均${(sampleBoxes/pallets).toFixed(1)}箱/板)`;
+        } else {
+            perPalletMain = `从 ${sampleBoxes} 个托盘中各抽1箱`;
+            perPalletWeak = `(剩余托盘不抽)`;
+        }
+
+        // 获取抽样方案
+        const { planA, planB, planC } = getThreePlans(qty, 'IL1');
+
+        // 更新缺陷表格
+        document.getElementById('outerNA').innerHTML = `<strong>${planA.n}</strong> (字码:${planA.usedCode})`;
+        document.getElementById('outerAcA').innerText = planA.Ac;
+        document.getElementById('outerReA').innerText = planA.Re;
+        document.getElementById('outerNB').innerHTML = `<strong>${planB.n}</strong> (字码:${planB.usedCode})`;
+        document.getElementById('outerAcB').innerText = planB.Ac;
+        document.getElementById('outerReB').innerText = planB.Re;
+        document.getElementById('outerNC').innerHTML = `<strong>${planC.n}</strong> (字码:${planC.usedCode})`;
+        document.getElementById('outerAcC').innerText = planC.Ac;
+        document.getElementById('outerReC').innerText = planC.Re;
+
+        // 突出显示三个关键数值（使用独立span，样式class key-number）
+        const totalBoxesSpan = `<span class="key-number">${totalBoxes}</span><span class="weak-text">箱</span>`;
+        const sampleBoxesSpan = `<span class="key-number">${sampleBoxes}</span><span class="weak-text">箱 (√≈${sqrtVal.toFixed(2)} → 四舍五入${roundedSqrt} → +1得${sampleBoxes})</span>`;
+        const perPalletSpan = `<span class="key-number">${perPalletMain}</span><span class="weak-text">${perPalletWeak}</span>`;
+
+        document.getElementById('outerTotalBoxDisplay').innerHTML = totalBoxesSpan;
+        document.getElementById('outerBoxSampleDisplay').innerHTML = sampleBoxesSpan;
+        document.getElementById('outerPerPalletDisplay').innerHTML = perPalletSpan;
+    }
+
+    // 内包材计算 (无需抽箱部分)
+    function calcInner() {
+        let qty = parseFloat(document.getElementById('innerQty').value);
+        if (isNaN(qty) || qty <= 0) { alert('请输入内包材到货数量'); return; }
+        const { planA, planB, planC } = getThreePlans(qty, 'S3');
+        document.getElementById('innerNA').innerHTML = `<strong>${planA.n}</strong> (字码:${planA.usedCode})`;
+        document.getElementById('innerAcA').innerText = planA.Ac;
+        document.getElementById('innerReA').innerText = planA.Re;
+        document.getElementById('innerNB').innerHTML = `<strong>${planB.n}</strong> (字码:${planB.usedCode})`;
+        document.getElementById('innerAcB').innerText = planB.Ac;
+        document.getElementById('innerReB').innerText = planB.Re;
+        document.getElementById('innerNC').innerHTML = `<strong>${planC.n}</strong> (字码:${planC.usedCode})`;
+        document.getElementById('innerAcC').innerText = planC.Ac;
+        document.getElementById('innerReC').innerText = planC.Re;
+    }
+
+    document.getElementById('calcOuterBtn').addEventListener('click', calcOuter);
+    document.getElementById('calcInnerBtn').addEventListener('click', calcInner);
+    window.addEventListener('DOMContentLoaded', () => {
+        calcOuter();
+        calcInner();
+    });
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        console.log('SW registered:', reg.scope);
+      }).catch(err => console.log('SW error:', err));
+    });
+  }
+</script>
+</body>
+</html>
